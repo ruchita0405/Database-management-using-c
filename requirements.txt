@@ -1,0 +1,3 @@
+command to run make file: mingw32-make
+command to run mannually:
+gcc -o municipal_corp_dms src/main.c src/bptree.c src/record.c src/csv_utils.c src/file_ops.c -Iinclude
