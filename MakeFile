@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -Wall -Iinclude
 SRC = src/main.c src/bptree.c src/record.c src/csv_utils.c src/file_ops.c
 OBJ = $(SRC:.c=.o)
-EXEC = municipal_corp_dms
+EXEC = healthcare_dbms
 
 all: $(EXEC)
 

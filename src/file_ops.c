@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stddef.h>
 
-int load_records_from_csv(const char *filename, BPTree *tree) {
+int load_records_from_csv(const char *filename, BPTree *id_tree, NameBPTree *name_tree) {
     FILE *fp = fopen(filename, "r");
     if (!fp) return -1;
     char line[512];
@@ -15,7 +15,8 @@ int load_records_from_csv(const char *filename, BPTree *tree) {
         if (parse_csv_line(line, &rec) == 4) {
             Record *new_rec = malloc(sizeof(Record));
             *new_rec = rec;
-            bptree_insert(tree, rec.id, new_rec);
+            bptree_insert(id_tree, rec.id, new_rec);
+            name_bptree_insert(name_tree, rec.name, new_rec);
         }
     }
     fclose(fp);

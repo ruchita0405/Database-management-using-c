@@ -1,6 +1,7 @@
 #ifndef CSV_UTILS_H
 #define CSV_UTILS_H
 
+#include <stddef.h>
 #include "record.h"
 
 // Functions to parse and write CSV records
