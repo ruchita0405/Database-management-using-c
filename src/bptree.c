@@ -3,8 +3,6 @@
 #include <stdio.h>
 #include <string.h>
 
-// --------- Existing B+ Tree implementation for integer keys (ID) ---------
-
 BPTreeNode* bptree_create_node() {
     BPTreeNode* node = (BPTreeNode*)malloc(sizeof(BPTreeNode));
     if(node) {
@@ -156,7 +154,6 @@ void bptree_destroy(BPTree *tree) {
     }
 }
 
-// --------- New: B+ Tree for string keys (Name) ---------
 
 NameBPTreeNode* name_bptree_create_node() {
     NameBPTreeNode* node = (NameBPTreeNode*)malloc(sizeof(NameBPTreeNode));
@@ -182,7 +179,6 @@ NameBPTree* name_bptree_create() {
     return tree;
 }
 
-// Helper: Insert record into a RecordList for a given name
 RecordList* record_list_insert(RecordList* head, Record* rec) {
     RecordList* new_rec = (RecordList*)malloc(sizeof(RecordList));
     new_rec->record = rec;
@@ -190,7 +186,6 @@ RecordList* record_list_insert(RecordList* head, Record* rec) {
     return new_rec;
 }
 
-// Helper: Remove a specific Record* from RecordList (by pointer match)
 RecordList* record_list_remove(RecordList* head, Record* rec) {
     RecordList* prev = NULL;
     RecordList* curr = head;
@@ -207,7 +202,6 @@ RecordList* record_list_remove(RecordList* head, Record* rec) {
     return head;
 }
 
-// Helper: Free whole RecordList without freeing the records themselves
 void record_list_free(RecordList* head) {
     RecordList* curr = head;
     while(curr) {
@@ -217,17 +211,22 @@ void record_list_free(RecordList* head) {
     }
 }
 
-// Forward declarations for string-keyed tree
 void name_bptree_split_child(NameBPTreeNode *parent, int idx, NameBPTreeNode *child);
 void name_bptree_insert_nonfull(NameBPTreeNode *node, const char *name, Record *record);
 
 // String compare for B+ Tree (lexicographical)
 int keycmp(const char* s1, const char* s2) {
-    return strcmp(s1, s2);
+    for (; *s1 && *s2; ++s1, ++s2) {
+        char c1 = tolower((unsigned char)*s1);
+        char c2 = tolower((unsigned char)*s2);
+        if (c1 != c2)
+            return c1 - c2;
+    }
+    return tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
 }
 
 // Insert into name-based (string) B+ Tree
-void name_bptree_insert(NameBPTree *tree, const char *name, Record *record) {
+void name_bptree_insert(NameBPTree *tree, const char *name_lower, Record *record) {
     NameBPTreeNode *root = tree->root;
     if(root->num_keys == ORDER - 1) {
         NameBPTreeNode *new_root = name_bptree_create_node();
@@ -235,11 +234,12 @@ void name_bptree_insert(NameBPTree *tree, const char *name, Record *record) {
         new_root->children[0] = root;
         tree->root = new_root;
         name_bptree_split_child(new_root, 0, root);
-        name_bptree_insert_nonfull(new_root, name, record);
+        name_bptree_insert_nonfull(new_root, name_lower, record);
     } else {
-        name_bptree_insert_nonfull(root, name, record);
+        name_bptree_insert_nonfull(root, name_lower, record);
     }
 }
+
 
 void name_bptree_insert_nonfull(NameBPTreeNode *node, const char *name, Record *record) {
     int i = node->num_keys - 1;
@@ -301,13 +301,12 @@ void name_bptree_split_child(NameBPTreeNode *parent, int idx, NameBPTreeNode *ch
 }
 
 // Print all records for a given name, returns count
-int name_bptree_search(NameBPTree *tree, const char *name) {
+int name_bptree_search(NameBPTree *tree, const char *name_lower) {
     NameBPTreeNode *node = tree->root;
     while(node) {
         int i = 0;
-        while(i < node->num_keys && keycmp(name, node->keys[i]) > 0) i++;
-        if(i < node->num_keys && keycmp(name, node->keys[i]) == 0) {
-            // Found, print all in RecordList
+        while(i < node->num_keys && keycmp(name_lower, node->keys[i]) > 0) i++;
+        if(i < node->num_keys && keycmp(name_lower, node->keys[i]) == 0) {
             RecordList *rl = node->record_lists[i];
             int count = 0;
             while(rl) {
@@ -346,14 +345,13 @@ void name_bptree_prefix_search(NameBPTree *tree, const char *prefix) {
 }
 
 // Remove the record pointer from the name tree
-void name_bptree_delete(NameBPTree *tree, const char *name, Record *record) {
+void name_bptree_delete(NameBPTree *tree, const char *name_lower, Record *record) {
     NameBPTreeNode *node = tree->root;
     while(node) {
         int i = 0;
-        while(i < node->num_keys && keycmp(name, node->keys[i]) > 0) i++;
-        if(i < node->num_keys && keycmp(name, node->keys[i]) == 0) {
+        while(i < node->num_keys && keycmp(name_lower, node->keys[i]) > 0) i++;
+        if(i < node->num_keys && keycmp(name_lower, node->keys[i]) == 0) {
             node->record_lists[i] = record_list_remove(node->record_lists[i], record);
-            // If list is now empty, remove key from node (shift left)
             if (!node->record_lists[i]) {
                 free(node->keys[i]);
                 for(int j = i; j < node->num_keys - 1; j++) {

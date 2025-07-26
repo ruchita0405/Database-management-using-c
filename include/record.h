@@ -7,10 +7,12 @@
 typedef struct {
     int id;
     char name[NAME_LEN];
+    char name_lower[NAME_LEN];
     char address[ADDRESS_LEN];
     int age;
 } Record;
 
+void normalize_string(const char *src, const char *dest);
 void print_record(const Record *rec);
 
 #endif

@@ -4,7 +4,7 @@ command to run make file:
 command to run mannually:
 gcc -o municipal_corp_dms src/main.c src/bptree.c src/record.c src/csv_utils.c src/file_ops.c -Iinclude
 
-
+challenge: case sensitive search operation by name - perform normalisation- convert all to lowercase(faster) or can perform case insensitive comparison(slower).
 
 file structure
 municipal-corp-dms/

@@ -34,6 +34,7 @@ int main() {
 
     int choice, id, age;
     char name[NAME_LEN], address[ADDRESS_LEN];
+    char name_lower[NAME_LEN];
 
     while (1) {
         print_banner();
@@ -63,6 +64,7 @@ int main() {
             printf("Enter Name: ");
             if (!fgets(name, sizeof(name), stdin)) continue;
             name[strcspn(name, "\n")] = 0;
+            normalize_string(name, name_lower);
 
             printf("Enter Address: ");
             if (!fgets(address, sizeof(address), stdin)) continue;
@@ -90,9 +92,11 @@ int main() {
             rec->id = id;
             rec->age = age;
             strncpy(rec->name, name, NAME_LEN);
+            strncpy(rec->name_lower, name_lower, NAME_LEN);
             strncpy(rec->address, address, ADDRESS_LEN);
+
             bptree_insert(id_tree, id, rec);
-            name_bptree_insert(name_tree, name, rec);
+            name_bptree_insert(name_tree, rec->name_lower, rec);
             append_record_to_csv(DATA_FILE, rec);
             printf(COLOR_GREEN "Record inserted successfully.\n" COLOR_RESET);
 
@@ -111,13 +115,13 @@ int main() {
                 printf(COLOR_YELLOW "No record found with ID %d.\n" COLOR_RESET, id);
 
         } else if (choice == 3) {
-            printf("Enter Name to search: ");
+           printf("Enter Name to search: ");
             if (!fgets(name, sizeof(name), stdin)) continue;
             name[strcspn(name, "\n")] = 0;
-            int found = name_bptree_search(name_tree, name); // should return count of matches
+            normalize_string(name, name_lower);
+            int found = name_bptree_search(name_tree, name_lower); // Search by normalized name
             if (!found)
                 printf(COLOR_YELLOW "No records found with name '%s'.\n" COLOR_RESET, name);
-
         } else if (choice == 4) {
             printf("Enter ID to delete: ");
             if (scanf("%d", &id) != 1) {
@@ -131,8 +135,13 @@ int main() {
                 printf(COLOR_YELLOW "ID %d does not exist.\n" COLOR_RESET, id);
                 continue;
             }
+
+            // Show the record before deletion
+            printf(COLOR_YELLOW "Record to be deleted:\n" COLOR_RESET);
+            print_record(rec);
+
             bptree_delete(id_tree, id);
-            name_bptree_delete(name_tree, rec->name, rec);
+            name_bptree_delete(name_tree, rec->name_lower, rec); // Use normalized name
             delete_record_from_csv(DATA_FILE, id);
             printf(COLOR_GREEN "Record with ID %d deleted successfully.\n" COLOR_RESET, id);
 
